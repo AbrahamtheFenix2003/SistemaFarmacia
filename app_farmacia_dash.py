@@ -372,7 +372,7 @@ def download_excel(n, data):
 )
 def download_csv(n, data):
     df = pd.DataFrame(data)
-    return dcc.send_data_frame(df.to_csv, "base_actualizada.csv", index=False)
+    return dcc.send_bytes(buf.getvalue(), "base_actualizada.xlsx")
 
 
 # ——— Arranque —————————————————————————————————————————————
