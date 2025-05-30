@@ -339,6 +339,8 @@ def calc_total(u, un):
 
 
 # 10) Descargar Excel
+import tempfile
+
 @app.callback(
     Output("download-excel-data", "data"),
     Input("download-excel", "n_clicks"),
@@ -346,9 +348,11 @@ def calc_total(u, un):
     prevent_initial_call=True
 )
 def download_excel(n, data):
+    if not data:
+        return dash.no_update
     df = pd.DataFrame(data)
-    buf = io.BytesIO()
-    with pd.ExcelWriter(buf, engine="xlsxwriter") as writer:
+    tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+    with pd.ExcelWriter(tmp_file.name, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name="Base")
         ws = writer.sheets["Base"]
         fmt_txt = writer.book.add_format({"num_format": "@"})
@@ -360,7 +364,7 @@ def download_excel(n, data):
                 ws.set_column(i, i, 15, fmt_num)
             else:
                 ws.set_column(i, i, 15)
-    return dddc.send_bytes(buf.getvalue(), "base_actualizada.xlsx")
+    return dcc.send_file(tmp_file.name)
 
 
 # 11) Descargar CSV
@@ -371,8 +375,12 @@ def download_excel(n, data):
     prevent_initial_call=True
 )
 def download_csv(n, data):
+    if not data:
+        return dash.no_update
     df = pd.DataFrame(data)
-    return dcc.send_bytes(buf.getvalue(), "base_actualizada.xlsx")
+    tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv", mode="w", newline='', encoding='utf-8')
+    df.to_csv(tmp_file.name, index=False)
+    return dcc.send_file(tmp_file.name)
 
 
 # ——— Arranque —————————————————————————————————————————————
