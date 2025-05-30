@@ -1,4 +1,3 @@
-```python
 import dash
 from dash import Dash, html, dcc, Input, Output, State, ctx, no_update
 import dash_ag_grid as dag
@@ -16,38 +15,36 @@ app.layout = dbc.Container([
     # Encabezado
     html.H2("🧾 Sistema Farmacia", className="text-center my-4"),
 
-    # Subida de archivos en cards
+    # Stores para mantener datos cargados
+    dcc.Store(id="store_catalog", data=None),
+    dcc.Store(id="store_base", data=None),
+
+    # Subida de archivos
     dbc.Row([
-        dbc.Col(
-            dbc.Card([
-                dbc.CardHeader("📂 Subir catálogo"),
-                dbc.CardBody([
-                    dcc.Upload(
-                        id="upload-catalog",
-                        children=html.Div("Arrastra o haz clic para subir (.xlsx)"),
-                        style={"border":"1px dashed #aaa", "padding":"20px", "textAlign":"center"},
-                        multiple=False
-                    ),
-                    html.Div(id="catalog-status", className="text-success mt-2")
-                ])
-            ]),
-            width=6
-        ),
-        dbc.Col(
-            dbc.Card([
-                dbc.CardHeader("📂 Subir base mensual"),
-                dbc.CardBody([
-                    dcc.Upload(
-                        id="upload-base",
-                        children=html.Div("Arrastra o haz clic para subir (.xlsx)"),
-                        style={"border":"1px dashed #aaa", "padding":"20px", "textAlign":"center"},
-                        multiple=False
-                    ),
-                    html.Div(id="base-status", className="text-success mt-2")
-                ])
-            ]),
-            width=6
-        )
+        dbc.Col(dbc.Card([
+            dbc.CardHeader("📂 Subir catálogo"),
+            dbc.CardBody([
+                dcc.Upload(
+                    id="upload-catalog",
+                    children=html.Div("Arrastra o haz clic para subir (.xlsx)"),
+                    style={"border": "1px dashed #aaa", "padding": "20px", "textAlign": "center"},
+                    multiple=False
+                ),
+                html.Div(id="catalog-status", className="text-success mt-2")
+            ])
+        ]), width=6),
+        dbc.Col(dbc.Card([
+            dbc.CardHeader("📂 Subir base mensual"),
+            dbc.CardBody([
+                dcc.Upload(
+                    id="upload-base",
+                    children=html.Div("Arrastra o haz clic para subir (.xlsx)"),
+                    style={"border": "1px dashed #aaa", "padding": "20px", "textAlign": "center"},
+                    multiple=False
+                ),
+                html.Div(id="base-status", className="text-success mt-2")
+            ])
+        ]), width=6)
     ], className="mb-4"),
 
     # Catálogo de Productos
@@ -55,8 +52,8 @@ app.layout = dbc.Container([
     dag.AgGrid(
         id="catalog-grid",
         columnDefs=[], rowData=[],
-        dashGridOptions={"rowSelection":"single"},
-        style={"height":"300px"}
+        dashGridOptions={"rowSelection": "single"},
+        style={"height": "300px"}
     ),
     html.Div(id="selected-display", className="mt-2"),
     dcc.Dropdown(id="manual-dropdown", placeholder="O elige manualmente un código"),
@@ -82,16 +79,15 @@ app.layout = dbc.Container([
     dag.AgGrid(
         id="base-grid",
         columnDefs=[], rowData=[],
-        dashGridOptions={"rowSelection":"single"},
-        style={"height":"300px"}
+        dashGridOptions={"rowSelection": "single"},
+        style={"height": "300px"}
     ),
     html.Div([
         dbc.Button("✏️ Editar seleccionado", id="open-edit-modal", color="primary", className="me-2"),
         dbc.Button("🗑️ Eliminar seleccionado", id="open-del-modal", color="danger")
     ], className="mt-3 mb-4"),
 
-    # Ventanas Modales
-    # Editar
+    # Modal Editar
     dbc.Modal([
         dbc.ModalHeader("Editar producto"),
         dbc.ModalBody([
@@ -104,7 +100,7 @@ app.layout = dbc.Container([
         ])
     ], id="edit-modal", is_open=False),
 
-    # Eliminar
+    # Modal Eliminar
     dbc.Modal([
         dbc.ModalHeader("Eliminar producto"),
         dbc.ModalBody("¿Confirma eliminar este producto de la base?"),
@@ -124,19 +120,22 @@ app.layout = dbc.Container([
     dcc.Download(id="download-csv-data")
 ], fluid=True)
 
+
 # ——— Funciones Helper —————————————————————————————————————————————
+
 def parse_catalog_xlsx(contents):
-    _, content_str = contents.split(",",1)
+    _, content_str = contents.split(",", 1)
     decoded = base64.b64decode(content_str)
     return pd.read_excel(io.BytesIO(decoded), header=6)
 
 
 def parse_base_xlsx(contents):
-    _, content_str = contents.split(",",1)
+    _, content_str = contents.split(",", 1)
     decoded = base64.b64decode(content_str)
     df = pd.read_excel(io.BytesIO(decoded))
     df["CodEstab"] = df.get("CodEstab", "").astype(str).str.zfill(7)
     return df
+
 
 # 1) Carga catálogo
 @app.callback(
@@ -148,11 +147,12 @@ def load_cat(contents):
     if contents:
         df = parse_catalog_xlsx(contents)
         if "Cod_Prod" not in df.columns:
-            return dash.no_update, "❌ Faltan columna 'Cod_Prod'"
+            return no_update, "❌ Faltan columna 'Cod_Prod'"
         return df.to_dict("records"), "✔️ Catálogo cargado"
     return None, ""
 
-# 2) Render catálogo + dropdown
+
+# 2) Render catálogo + manual dropdown
 @app.callback(
     Output("catalog-grid", "columnDefs"),
     Output("catalog-grid", "rowData"),
@@ -166,6 +166,7 @@ def render_cat(data):
         opts = [{"label": str(v), "value": v} for v in df["Cod_Prod"].unique()]
         return cols, df.to_dict("records"), opts
     return [], [], []
+
 
 # 3) Gestión base (upload, add, edit, delete)
 @app.callback(
@@ -221,6 +222,7 @@ def manage_base(upload, add, save, delete, stored, code, pu, uni, mpu, muni, sel
         df["CodEstab"] = "0021870"
     return df.to_dict("records"), msg_base, msg_update
 
+
 # 4) Render base
 @app.callback(
     Output("base-grid", "columnDefs"),
@@ -233,6 +235,7 @@ def render_base(data):
         cols = [{"field": c} for c in df.columns]
         return cols, df.to_dict("records")
     return [], []
+
 
 # 5) Toggle y poblar modal editar
 @app.callback(
@@ -264,6 +267,7 @@ def toggle_and_populate_edit(o_click, c_click, save_click, is_open, selected):
         return False, no_update, no_update
     return is_open, no_update, no_update
 
+
 # 6) Toggle modal eliminar
 @app.callback(
     Output("delete-modal", "is_open"),
@@ -286,6 +290,7 @@ def toggle_delete(open_click, cancel_click, delete_click, is_open, selected):
         return False
     return is_open
 
+
 # 7) Sincronizar selección catálogo
 @app.callback(
     Output("manual-dropdown", "value"),
@@ -303,6 +308,7 @@ def sync_selection(rows, manual):
         return manual, f"✅ Seleccionaste: {manual}"
     return no_update, no_update
 
+
 # 8) Autofill unidades
 @app.callback(
     Output("unidades", "value"),
@@ -319,7 +325,8 @@ def autofill_units(code, data):
                 return int(frac)
     return no_update
 
-# 9）Calcular total
+
+# 9) Calcular total
 @app.callback(
     Output("precio-total", "children"),
     Input("precio-unit", "value"),
@@ -329,6 +336,7 @@ def calc_total(u, un):
     if u is not None and un is not None:
         return f"💰 Total: {u * un:.2f}"
     return ""
+
 
 # 10) Descargar Excel
 @app.callback(
@@ -352,7 +360,8 @@ def download_excel(n, data):
                 ws.set_column(i, i, 15, fmt_num)
             else:
                 ws.set_column(i, i, 15)
-    return dcc.send_bytes(buf.getvalue(), "base_actualizada.xlsx")
+    return dddc.send_bytes(buf.getvalue(), "base_actualizada.xlsx")
+
 
 # 11) Descargar CSV
 @app.callback(
@@ -365,8 +374,8 @@ def download_csv(n, data):
     df = pd.DataFrame(data)
     return dcc.send_data_frame(df.to_csv, "base_actualizada.csv", index=False)
 
+
 # ——— Arranque —————————————————————————————————————————————
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-```
