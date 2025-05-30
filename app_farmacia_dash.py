@@ -329,4 +329,6 @@ def download_csv(n, data):
     return dcc.send_data_frame(df.to_csv, "base_actualizada.csv", index=False)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    import os
+    port = int(os.environ.get("PORT", 10000))  # Render define el puerto por variable de entorno
+    app.run(host="0.0.0.0", port=port)
