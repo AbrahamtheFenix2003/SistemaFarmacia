@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: sistema-farmacia
+    env: python
+    buildCommand: ""
+    startCommand: python app_farmacia_dash.py
+    plan: free
