@@ -2,8 +2,6 @@ services:
   - type: web
     name: sistema-farmacia
     env: python
-    plan: free
-    branch: main
-    buildCommand: pip install -r requirements.txt
+    buildCommand: ""
     startCommand: python app_farmacia_dash.py
-    # (opcional) envVars para PORT si tu app lo necesita
+    plan: free
