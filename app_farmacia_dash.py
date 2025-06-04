@@ -3,230 +3,122 @@ from dash import Dash, html, dcc, Input, Output, State, ctx, no_update
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 import pandas as pd
-import io, base64, tempfile, os
+import io, base64
+import os
 
 # Inicializar la app con Bootstrap
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.title = "Sistema Farmacia (Dash)"
 
 # ——— Layout Mejorado —————————————————————————————————————————————
-app.layout = dbc.Container(fluid=True, children=[
-
-    # Encabezado principal
-    dbc.Row(
-        dbc.Col(
-            html.H2("🧾 Sistema Farmacia", className="text-center py-4"),
-            width=12
-        )
-    ),
+app.layout = dbc.Container([
+    # Encabezado
+    html.H2("🧾 Sistema Farmacia", className="text-center my-4"),
 
     # Stores para mantener datos cargados
     dcc.Store(id="store_catalog", data=None),
     dcc.Store(id="store_base", data=None),
 
-    # Sección: Subida de archivos
+    # Subida de archivos
     dbc.Row([
-
-        # Card: Subir catálogo
-        dbc.Col(
-            dbc.Card([
-                dbc.CardHeader(html.H5("📂 Subir catálogo")),
-                dbc.CardBody([
-                    dcc.Upload(
-                        id="upload-catalog",
-                        children=html.Div("Arrastra o haz clic para subir (.xlsx)"),
-                        style={
-                            "border": "2px dashed #aaa",
-                            "borderRadius": "5px",
-                            "padding": "30px",
-                            "textAlign": "center",
-                            "backgroundColor": "#f9f9f9"
-                        },
-                        multiple=False
-                    ),
-                    html.Div(id="catalog-status", className="text-success mt-2")
-                ], className="p-3")
-            ], className="h-100 shadow-sm"),
-            width=6
-        ),
-
-        # Card: Subir base mensual
-        dbc.Col(
-            dbc.Card([
-                dbc.CardHeader(html.H5("📂 Subir base mensual")),
-                dbc.CardBody([
-                    dcc.Upload(
-                        id="upload-base",
-                        children=html.Div("Arrastra o haz clic para subir (.xlsx)"),
-                        style={
-                            "border": "2px dashed #aaa",
-                            "borderRadius": "5px",
-                            "padding": "30px",
-                            "textAlign": "center",
-                            "backgroundColor": "#f9f9f9"
-                        },
-                        multiple=False
-                    ),
-                    html.Div(id="base-status", className="text-success mt-2")
-                ], className="p-3")
-            ], className="h-100 shadow-sm"),
-            width=6
-        ),
-
+        dbc.Col(dbc.Card([
+            dbc.CardHeader("📂 Subir catálogo"),
+            dbc.CardBody([
+                dcc.Upload(
+                    id="upload-catalog",
+                    children=html.Div("Arrastra o haz clic para subir (.xlsx)"),
+                    style={"border": "1px dashed #aaa", "padding": "20px", "textAlign": "center"},
+                    multiple=False
+                ),
+                html.Div(id="catalog-status", className="text-success mt-2")
+            ])
+        ]), width=6),
+        dbc.Col(dbc.Card([
+            dbc.CardHeader("📂 Subir base mensual"),
+            dbc.CardBody([
+                dcc.Upload(
+                    id="upload-base",
+                    children=html.Div("Arrastra o haz clic para subir (.xlsx)"),
+                    style={"border": "1px dashed #aaa", "padding": "20px", "textAlign": "center"},
+                    multiple=False
+                ),
+                html.Div(id="base-status", className="text-success mt-2")
+            ])
+        ]), width=6)
     ], className="mb-4"),
 
-    # Sección: Catálogo de Productos
-    dbc.Card([
-        dbc.CardHeader(html.H4("🔎 Catálogo de Productos"), className="bg-light"),
-        dbc.CardBody([
-            dag.AgGrid(
-                id="catalog-grid",
-                columnDefs=[],
-                rowData=[],
-                dashGridOptions={"rowSelection": "single"},
-                style={"height": "300px", "width": "100%"}
-            ),
-            dbc.Row([
-                dbc.Col(html.Div(id="selected-display", className="mt-2"), width=6),
-                dbc.Col(
-                    dcc.Dropdown(
-                        id="manual-dropdown",
-                        placeholder="O elige manualmente un código"
-                    ),
-                    width=6
-                )
-            ], className="align-items-center mt-3"),
-        ], className="p-3")
-    ], className="mb-4 shadow-sm"),
+    # Catálogo de Productos
+    html.H4("🔎 Catálogo de Productos", className="mt-4 border-bottom pb-2"),
+    dag.AgGrid(
+        id="catalog-grid",
+        columnDefs=[], rowData=[],
+        dashGridOptions={"rowSelection": "single"},
+        style={"height": "300px"}
+    ),
+    html.Div(id="selected-display", className="mt-2"),
+    dcc.Dropdown(id="manual-dropdown", placeholder="O elige manualmente un código"),
+    html.Hr(),
 
-    # Sección: Cálculo de Precios
+    # Cálculo de Precios
+    html.H4("💲 Cálculo de Precios", className="mt-4 border-bottom pb-2"),
     dbc.Card([
-        dbc.CardHeader(html.H4("💲 Cálculo de Precios"), className="bg-light"),
         dbc.CardBody([
             dbc.Row([
-                dbc.Col(
-                    dbc.Input(
-                        id="precio-unit",
-                        type="number",
-                        placeholder="Precio unitario",
-                        min=0,
-                        step=0.01
-                    ),
-                    width=4
-                ),
-                dbc.Col(
-                    dbc.Input(
-                        id="unidades",
-                        type="number",
-                        placeholder="Unidades por caja",
-                        min=1,
-                        step=1
-                    ),
-                    width=4
-                ),
-                dbc.Col(html.Div(id="precio-total", className="fs-5 fw-bold"), width=4)
-            ], className="g-3"),
-            dbc.Row(
-                dbc.Col(
-                    dbc.Button("➕ Añadir producto", id="add-btn", color="success", className="mt-3 w-100"),
-                    width=4
-                ),
-                className="mt-2"
-            ),
-            html.Div(id="update-msg", className="mt-2 text-success")
-        ], className="p-3")
-    ], className="mb-4 shadow-sm"),
+                dbc.Col(dbc.Input(id="precio-unit", type="number", placeholder="Precio unitario", min=0, step=0.01), width=4),
+                dbc.Col(dbc.Input(id="unidades", type="number", placeholder="Unidades por caja", min=1, step=1), width=4),
+                dbc.Col(html.Div(id="precio-total", className="mt-2"), width=4)
+            ])
+        ])
+    ], className="mb-4"),
+    dbc.Button("➕ Añadir producto", id="add-btn", color="success"),
+    html.Div(id="update-msg", className="mt-2 text-success"),
+    html.Hr(),
 
-    # Sección: Base Mensual Actualizada
-    dbc.Card([
-        dbc.CardHeader(html.H4("📋 Base Mensual Actualizada"), className="bg-light"),
-        dbc.CardBody([
-            dag.AgGrid(
-                id="base-grid",
-                columnDefs=[],
-                rowData=[],
-                dashGridOptions={"rowSelection": "single"},
-                style={"height": "300px", "width": "100%"}
-            ),
-            dbc.Row([
-                dbc.Col(
-                    dbc.Button("✏️ Editar seleccionado", id="open-edit-modal", color="primary", className="me-2 w-100"),
-                    width=3
-                ),
-                dbc.Col(
-                    dbc.Button("🗑️ Eliminar seleccionado", id="open-del-modal", color="danger", className="w-100"),
-                    width=3
-                )
-            ], className="mt-3 gx-3")
-        ], className="p-3")
-    ], className="mb-4 shadow-sm"),
+    # Base Mensual Actualizada
+    html.H4("📋 Base Mensual Actualizada", className="mt-4 border-bottom pb-2"),
+    dag.AgGrid(
+        id="base-grid",
+        columnDefs=[], rowData=[],
+        dashGridOptions={"rowSelection": "single"},
+        style={"height": "300px"}
+    ),
+    html.Div([
+        dbc.Button("✏️ Editar seleccionado", id="open-edit-modal", color="primary", className="me-2"),
+        dbc.Button("🗑️ Eliminar seleccionado", id="open-del-modal", color="danger")
+    ], className="mt-3 mb-4"),
 
-    # Modal: Editar Producto
+    # Modal Editar
     dbc.Modal([
-        dbc.ModalHeader("✏️ Editar producto", className="bg-light"),
+        dbc.ModalHeader("Editar producto"),
         dbc.ModalBody([
-            dbc.Row([
-                dbc.Col(
-                    dbc.Input(
-                        id="modal-edit-unit",
-                        type="number",
-                        placeholder="Nuevo precio unitario",
-                        min=0,
-                        step=0.01
-                    ),
-                    width=6
-                ),
-                dbc.Col(
-                    dbc.Input(
-                        id="modal-edit-units",
-                        type="number",
-                        placeholder="Unidades por caja",
-                        min=1,
-                        step=1
-                    ),
-                    width=6
-                )
-            ], className="g-3")
-        ], className="p-3"),
+            dbc.Input(id="modal-edit-unit", type="number", placeholder="Nuevo precio unitario", min=0, step=0.01),
+            dbc.Input(id="modal-edit-units", type="number", placeholder="Unidades por caja", min=1, step=1, className="mt-2")
+        ]),
         dbc.ModalFooter([
             dbc.Button("💾 Guardar cambios", id="modal-save", color="primary"),
             dbc.Button("Cerrar", id="modal-close", color="secondary", className="ms-2")
-        ], className="p-2")
-    ], id="edit-modal", is_open=False, size="lg", centered=True),
+        ])
+    ], id="edit-modal", is_open=False),
 
-    # Modal: Eliminar Producto
+    # Modal Eliminar
     dbc.Modal([
-        dbc.ModalHeader("🗑️ Eliminar producto", className="bg-light"),
+        dbc.ModalHeader("Eliminar producto"),
         dbc.ModalBody("¿Confirma eliminar este producto de la base?"),
         dbc.ModalFooter([
             dbc.Button("❌ Eliminar", id="modal-delete", color="danger"),
             dbc.Button("Cancelar", id="modal-cancel", color="secondary", className="ms-2")
-        ], className="p-2")
-    ], id="delete-modal", is_open=False, size="md", centered=True),
+        ])
+    ], id="delete-modal", is_open=False),
 
-    # Sección: Descargas
-    dbc.Card([
-        dbc.CardHeader(html.H5("📥 Exportar Base Mensual"), className="bg-light"),
-        dbc.CardBody(
-            dbc.Row([
-                dbc.Col(
-                    dbc.Button("📥 Descargar Excel", id="download-excel", color="outline-primary", className="w-100"),
-                    width=6
-                ),
-                dbc.Col(
-                    dbc.Button("📥 Descargar CSV", id="download-csv", color="outline-secondary", className="w-100"),
-                    width=6
-                )
-            ], className="g-3")
-        , className="p-3")
-    ], className="mb-4 shadow-sm"),
-
-    # Descargas (callbacks)
+    html.Hr(),
+    # Descargas
+    dbc.Row([
+        dbc.Col(html.Button("📥 Descargar Excel", id="download-excel", className="btn btn-outline-primary"), width=6),
+        dbc.Col(html.Button("📥 Descargar CSV", id="download-csv", className="btn btn-outline-secondary"), width=6)
+    ]),
     dcc.Download(id="download-excel-data"),
-    dcc.Download(id="download-csv-data"),
-
-    html.Br()
-])
+    dcc.Download(id="download-csv-data")
+], fluid=True)
 
 
 # ——— Funciones Helper —————————————————————————————————————————————
@@ -305,13 +197,12 @@ def manage_base(upload, add, save, delete, stored, code, pu, uni, mpu, muni, sel
         if code in df.get("CodProd", []):
             msg_update = f"⚠️ {code} ya existe"
         else:
-            nuevo = {
+            df = pd.concat([df, pd.DataFrame([{
                 "CodEstab": "0021870",
                 "CodProd": code,
                 "Precio 2": pu,
                 "Precio 1": pu * uni
-            }
-            df = pd.concat([df, pd.DataFrame([nuevo])], ignore_index=True)
+            }])], ignore_index=True)
             msg_update = "✔️ Base actualizada"
     elif trig == "modal-save" and mpu is not None and muni is not None and selected:
         sel = selected[0]["CodProd"]
@@ -448,6 +339,8 @@ def calc_total(u, un):
 
 
 # 10) Descargar Excel
+import tempfile
+
 @app.callback(
     Output("download-excel-data", "data"),
     Input("download-excel", "n_clicks"),
@@ -492,5 +385,5 @@ def download_csv(n, data):
 
 # ——— Arranque —————————————————————————————————————————————
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8050))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
