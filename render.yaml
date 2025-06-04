@@ -3,17 +3,7 @@ services:
     name: sistema-farmacia
     env: python
     plan: free
-    branch: main               # o la rama que uses habitualmente
-    # ----------------------------------------
-    # Este buildCommand instalará todas tus dependencias
+    branch: main
     buildCommand: pip install -r requirements.txt
-    # ----------------------------------------
-    # StartCommand: sigue usando python si no quieres Gunicorn.
     startCommand: python app_farmacia_dash.py
-    # ----------------------------------------
-    # Render le pasará automáticamente la variable de entorno PORT.
-    # No es estrictamente necesario que la declares aquí si la lees en el código.
-    # Pero puedes dejarlo comentado o así:
-    # envVars:
-    #   - key: PORT
-    #     value: "10000"
+    # (opcional) envVars para PORT si tu app lo necesita
