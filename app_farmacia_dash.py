@@ -35,198 +35,202 @@ navbar = dbc.Navbar(
 app.layout = dbc.Container(fluid=True, children=[
     navbar,
 
-    # Contenedor principal con un poco de padding inferior
-    dbc.Container(fluid=False, className="px-3", children=[
-        # ---------- PESTAÑAS PRINCIPALES ----------
-        dbc.Tabs([
-            # --------------------- PESTAÑA 1: Carga de Datos ---------------------
-            dbc.Tab(label="📂 Carga de Datos", tab_id="tab-upload", label_style={"fontWeight": "600"}, children=[
-                html.Br(),
-                dbc.Row([
-                    # Card para subir catálogo
-                    dbc.Col(
-                        dbc.Card(
-                            [
-                                dbc.CardHeader(
-                                    html.H5("📁 Subir Catálogo", className="mb-0"),
-                                    className="bg-white border-0"
-                                ),
-                                dbc.CardBody(
-                                    [
-                                        dcc.Upload(
-                                            id="upload-catalog",
-                                            children=html.Div("🔍 Arrastra o haz clic para subir (.xlsx)", className="text-muted"),
-                                            style={
-                                                "borderWidth": "2px",
-                                                "borderStyle": "dashed",
-                                                "borderRadius": "8px",
-                                                "padding": "30px",
-                                                "textAlign": "center",
-                                                "backgroundColor": "#f8f9fa",
-                                            },
-                                            multiple=False
-                                        ),
-                                        html.Div(id="catalog-status", className="text-success mt-2")
-                                    ]
-                                ),
-                            ],
-                            className="shadow-sm mb-4"
+    # Contenedor principal con padding interno y margen superior
+    dbc.Container(
+        fluid=False,
+        className="px-3 mt-4",  # Aquí combinamos ambos estilos en una sola propiedad
+        children=[
+            # ---------- PESTAÑAS PRINCIPALES ----------
+            dbc.Tabs([
+                # --------------------- PESTAÑA 1: Carga de Datos ---------------------
+                dbc.Tab(label="📂 Carga de Datos", tab_id="tab-upload", label_style={"fontWeight": "600"}, children=[
+                    html.Br(),
+                    dbc.Row([
+                        # Card para subir catálogo
+                        dbc.Col(
+                            dbc.Card(
+                                [
+                                    dbc.CardHeader(
+                                        html.H5("📁 Subir Catálogo", className="mb-0"),
+                                        className="bg-white border-0"
+                                    ),
+                                    dbc.CardBody(
+                                        [
+                                            dcc.Upload(
+                                                id="upload-catalog",
+                                                children=html.Div("🔍 Arrastra o haz clic para subir (.xlsx)", className="text-muted"),
+                                                style={
+                                                    "borderWidth": "2px",
+                                                    "borderStyle": "dashed",
+                                                    "borderRadius": "8px",
+                                                    "padding": "30px",
+                                                    "textAlign": "center",
+                                                    "backgroundColor": "#f8f9fa",
+                                                },
+                                                multiple=False
+                                            ),
+                                            html.Div(id="catalog-status", className="text-success mt-2")
+                                        ]
+                                    ),
+                                ],
+                                className="shadow-sm mb-4"
+                            ),
+                            width=6
                         ),
-                        width=6
+                        # Card para subir base mensual
+                        dbc.Col(
+                            dbc.Card(
+                                [
+                                    dbc.CardHeader(
+                                        html.H5("📁 Subir Base Mensual", className="mb-0"),
+                                        className="bg-white border-0"
+                                    ),
+                                    dbc.CardBody(
+                                        [
+                                            dcc.Upload(
+                                                id="upload-base",
+                                                children=html.Div("🔍 Arrastra o haz clic para subir (.xlsx)", className="text-muted"),
+                                                style={
+                                                    "borderWidth": "2px",
+                                                    "borderStyle": "dashed",
+                                                    "borderRadius": "8px",
+                                                    "padding": "30px",
+                                                    "textAlign": "center",
+                                                    "backgroundColor": "#f8f9fa",
+                                                },
+                                                multiple=False
+                                            ),
+                                            html.Div(id="base-status", className="text-success mt-2")
+                                        ]
+                                    ),
+                                ],
+                                className="shadow-sm mb-4"
+                            ),
+                            width=6
+                        )
+                    ])
+                ]),
+
+                # --------------------- PESTAÑA 2: Gestión de Productos ---------------------
+                dbc.Tab(label="📋 Gestión de Productos", tab_id="tab-products", label_style={"fontWeight": "600"}, children=[
+                    html.Br(),
+                    # Título dentro de la pestaña
+                    html.H4("🔍 Catálogo de Productos", className="mt-2 mb-3"),
+
+                    # Card con AgGrid para catálogo
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                dag.AgGrid(
+                                    id="catalog-grid",
+                                    columnDefs=[],
+                                    rowData=[],
+                                    defaultColDef={"flex": 1, "sortable": True, "filter": True, "resizable": True},
+                                    style={"height": "350px", "width": "100%"}
+                                ),
+                                html.Div(id="catalog-info", className="mt-2")
+                            ]
+                        ),
+                        className="shadow-sm mb-4"
                     ),
-                    # Card para subir base mensual
-                    dbc.Col(
-                        dbc.Card(
+
+                    html.H4("💲 Base Mensual", className="mt-4 mb-3"),
+                    # Card con AgGrid para base mensual
+                    dbc.Card(
+                        dbc.CardBody(
                             [
-                                dbc.CardHeader(
-                                    html.H5("📁 Subir Base Mensual", className="mb-0"),
-                                    className="bg-white border-0"
+                                dag.AgGrid(
+                                    id="base-grid",
+                                    columnDefs=[],
+                                    rowData=[],
+                                    rowSelection="single",
+                                    defaultColDef={"flex": 1, "sortable": True, "filter": True, "resizable": True},
+                                    style={"height": "350px", "width": "100%"}
                                 ),
-                                dbc.CardBody(
-                                    [
-                                        dcc.Upload(
-                                            id="upload-base",
-                                            children=html.Div("🔍 Arrastra o haz clic para subir (.xlsx)", className="text-muted"),
-                                            style={
-                                                "borderWidth": "2px",
-                                                "borderStyle": "dashed",
-                                                "borderRadius": "8px",
-                                                "padding": "30px",
-                                                "textAlign": "center",
-                                                "backgroundColor": "#f8f9fa",
-                                            },
-                                            multiple=False
-                                        ),
-                                        html.Div(id="base-status", className="text-success mt-2")
-                                    ]
-                                ),
-                            ],
-                            className="shadow-sm mb-4"
+                                html.Div(id="base-info", className="mt-2")
+                            ]
                         ),
-                        width=6
+                        className="shadow-sm mb-4"
+                    ),
+
+                    # Botones de Editar / Eliminar
+                    dbc.Row(
+                        [
+                            dbc.Col(dbc.Button("✏️ Editar Seleccionado", id="open-edit-modal", color="primary", className="me-2"), width="auto"),
+                            dbc.Col(dbc.Button("🗑️ Eliminar Seleccionado", id="open-del-modal", color="danger"), width="auto"),
+                        ],
+                        className="mb-5"
+                    ),
+
+                    # Modal de edición
+                    dbc.Modal(
+                        [
+                            dbc.ModalHeader(html.H5("✏️ Editar Producto", className="mb-0")),
+                            dbc.ModalBody(
+                                [
+                                    dbc.Label("Nuevo Precio Unitario:", className="fw-bold"),
+                                    dbc.Input(id="modal-edit-unit", type="number", placeholder="Precio unitario", min=0, step=0.01),
+                                    dbc.Label("Unidades por Caja:", className="fw-bold mt-3"),
+                                    dbc.Input(id="modal-edit-units", type="number", placeholder="Unidades por caja", min=1, step=1),
+                                ]
+                            ),
+                            dbc.ModalFooter(
+                                [
+                                    dbc.Button("💾 Guardar Cambios", id="modal-save", color="success"),
+                                    dbc.Button("Cerrar", id="modal-close", color="secondary", className="ms-2")
+                                ]
+                            )
+                        ],
+                        id="edit-modal",
+                        is_open=False,
+                        centered=True
+                    ),
+
+                    # Modal de eliminación
+                    dbc.Modal(
+                        [
+                            dbc.ModalHeader(html.H5("🗑️ Eliminar Producto", className="mb-0")),
+                            dbc.ModalBody("¿Estás seguro de eliminar este producto de la base mensual?"),
+                            dbc.ModalFooter(
+                                [
+                                    dbc.Button("❌ Eliminar", id="modal-delete", color="danger"),
+                                    dbc.Button("Cancelar", id="modal-cancel", color="secondary", className="ms-2")
+                                ]
+                            )
+                        ],
+                        id="delete-modal",
+                        is_open=False,
+                        centered=True
                     )
-                ])
-            ]),
+                ]),
 
-            # --------------------- PESTAÑA 2: Gestión de Productos ---------------------
-            dbc.Tab(label="📋 Gestión de Productos", tab_id="tab-products", label_style={"fontWeight": "600"}, children=[
-                html.Br(),
-                # Título dentro de la pestaña
-                html.H4("🔍 Catálogo de Productos", className="mt-2 mb-3"),
-
-                # Card con AgGrid para catálogo
-                dbc.Card(
-                    dbc.CardBody(
+                # --------------------- PESTAÑA 3: Descargas ---------------------
+                dbc.Tab(label="📥 Descargas", tab_id="tab-download", label_style={"fontWeight": "600"}, children=[
+                    html.Br(),
+                    dbc.Row(
                         [
-                            dag.AgGrid(
-                                id="catalog-grid",
-                                columnDefs=[],
-                                rowData=[],
-                                defaultColDef={"flex": 1, "sortable": True, "filter": True, "resizable": True},
-                                style={"height": "350px", "width": "100%"}
-                            ),
-                            html.Div(id="catalog-info", className="mt-2")
-                        ]
+                            dbc.Col(dbc.Button("📄 Descargar Excel", id="download-excel", color="info", className="w-100"), width=6),
+                            dbc.Col(dbc.Button("📑 Descargar CSV", id="download-csv", color="secondary", className="w-100"), width=6),
+                        ],
+                        className="mt-4 mb-5"
                     ),
-                    className="shadow-sm mb-4"
-                ),
+                    # Componentes invisibles para la descarga
+                    dcc.Download(id="download-excel-data"),
+                    dcc.Download(id="download-csv-data"),
+                ]),
+            ], id="tabs", active_tab="tab-upload", className="mb-3"),
 
-                html.H4("💲 Base Mensual", className="mt-4 mb-3"),
-                # Card con AgGrid para base mensual
-                dbc.Card(
-                    dbc.CardBody(
-                        [
-                            dag.AgGrid(
-                                id="base-grid",
-                                columnDefs=[],
-                                rowData=[],
-                                rowSelection="single",
-                                defaultColDef={"flex": 1, "sortable": True, "filter": True, "resizable": True},
-                                style={"height": "350px", "width": "100%"}
-                            ),
-                            html.Div(id="base-info", className="mt-2")
-                        ]
-                    ),
-                    className="shadow-sm mb-4"
-                ),
-
-                # Botones de Editar / Eliminar
-                dbc.Row(
-                    [
-                        dbc.Col(dbc.Button("✏️ Editar Seleccionado", id="open-edit-modal", color="primary", className="me-2"), width="auto"),
-                        dbc.Col(dbc.Button("🗑️ Eliminar Seleccionado", id="open-del-modal", color="danger"), width="auto"),
-                    ],
-                    className="mb-5"
-                ),
-
-                # Modal de edición
-                dbc.Modal(
-                    [
-                        dbc.ModalHeader(html.H5("✏️ Editar Producto", className="mb-0")),
-                        dbc.ModalBody(
-                            [
-                                dbc.Label("Nuevo Precio Unitario:", className="fw-bold"),
-                                dbc.Input(id="modal-edit-unit", type="number", placeholder="Precio unitario", min=0, step=0.01),
-                                dbc.Label("Unidades por Caja:", className="fw-bold mt-3"),
-                                dbc.Input(id="modal-edit-units", type="number", placeholder="Unidades por caja", min=1, step=1),
-                            ]
-                        ),
-                        dbc.ModalFooter(
-                            [
-                                dbc.Button("💾 Guardar Cambios", id="modal-save", color="success"),
-                                dbc.Button("Cerrar", id="modal-close", color="secondary", className="ms-2")
-                            ]
-                        )
-                    ],
-                    id="edit-modal",
-                    is_open=False,
-                    centered=True
-                ),
-
-                # Modal de eliminación
-                dbc.Modal(
-                    [
-                        dbc.ModalHeader(html.H5("🗑️ Eliminar Producto", className="mb-0")),
-                        dbc.ModalBody("¿Estás seguro de eliminar este producto de la base mensual?"),
-                        dbc.ModalFooter(
-                            [
-                                dbc.Button("❌ Eliminar", id="modal-delete", color="danger"),
-                                dbc.Button("Cancelar", id="modal-cancel", color="secondary", className="ms-2")
-                            ]
-                        )
-                    ],
-                    id="delete-modal",
-                    is_open=False,
-                    centered=True
+            # Espacio final antes del footer
+            html.Br(),
+            html.Hr(),
+            dbc.Row(
+                dbc.Col(
+                    html.P("© 2025 Sistema Farmacia", className="text-center text-muted"),
+                    width=12
                 )
-            ]),
-
-            # --------------------- PESTAÑA 3: Descargas ---------------------
-            dbc.Tab(label="📥 Descargas", tab_id="tab-download", label_style={"fontWeight": "600"}, children=[
-                html.Br(),
-                dbc.Row(
-                    [
-                        dbc.Col(dbc.Button("📄 Descargar Excel", id="download-excel", color="info", className="w-100"), width=6),
-                        dbc.Col(dbc.Button("📑 Descargar CSV", id="download-csv", color="secondary", className="w-100"), width=6),
-                    ],
-                    className="mt-4 mb-5"
-                ),
-                # Componente invisible que se dispara para la descarga
-                dcc.Download(id="download-excel-data"),
-                dcc.Download(id="download-csv-data"),
-            ]),
-        ], id="tabs", active_tab="tab-upload", className="mb-3"),
-
-        # Espacio final antes del footer
-        html.Br(),
-        html.Hr(),
-        dbc.Row(
-            dbc.Col(
-                html.P("© 2025 Sistema Farmacia", className="text-center text-muted"),
-                width=12
             )
-        )
-    ], className="mt-4")  # Fin del contenedor secundario
+        ]
+    )  # Fin del contenedor interno (solo un className combinado: "px-3 mt-4")
 ])  # Fin del layout principal
 
 
