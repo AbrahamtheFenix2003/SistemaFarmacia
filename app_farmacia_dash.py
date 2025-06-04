@@ -135,7 +135,7 @@ app.layout = dbc.Container(fluid=True, children=[
                     ),
 
                     html.H4("💲 Base Mensual", className="mt-4 mb-3"),
-                    # Card con AgGrid para base mensual
+                    # Card con AgGrid para base mensual: movemos rowSelection a dashGridOptions
                     dbc.Card(
                         dbc.CardBody(
                             [
@@ -143,7 +143,7 @@ app.layout = dbc.Container(fluid=True, children=[
                                     id="base-grid",
                                     columnDefs=[],
                                     rowData=[],
-                                    rowSelection="single",
+                                    dashGridOptions={"rowSelection": "single"},
                                     defaultColDef={"flex": 1, "sortable": True, "filter": True, "resizable": True},
                                     style={"height": "350px", "width": "100%"}
                                 ),
