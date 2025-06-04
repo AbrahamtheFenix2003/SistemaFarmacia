@@ -1,7 +1,6 @@
-dash
+   dash
 dash-bootstrap-components
 dash-ag-grid
 pandas
 openpyxl
 xlsxwriter
-gunicorn
