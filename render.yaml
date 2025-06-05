@@ -2,6 +2,6 @@ services:
   - type: web
     name: sistema-farmacia
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python app_farmacia_dash.py"
+    buildCommand: ""
+    startCommand: python app_farmacia_dash.py
     plan: free
